@@ -1,5 +1,5 @@
 local LrView = import 'LrView'
-local subject_scene_notice = 'Save tons of time and hassle entering IPTC subject and scene codes via a controlled\nkeyword vocabulary like www.lowemo.photo/lightroom/keyword-vocabulary\n\nIMPORTANT: If you have not added IPTC keywords to a selected photo, running without the\n“protect” setting for any IPTC terms will clear the corresponding IPTC code field.'
+local subject_scene_notice = 'Save tons of time and hassle entering IPTC subject and scene codes via a controlled\nkeyword vocabulary like www.lowemo.photo/lightroom-keyword-vocabulary\n\nIMPORTANT: If you have not added IPTC keywords to a selected photo, running without the\n“protect” setting for any IPTC terms will clear the corresponding IPTC code field.'
 
 local genre_notice = 'IPTC Genre codes, by default, *are* set to export with the normal keywords, as they are\nhuman-readable (English) terms which should describe the media. For now, rather than\nadding a new custom field for “Product Genre”, these terms are combined and added to\nthe IPTC “Intellectual” Genre field.'
 
@@ -29,7 +29,6 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
                value = bind { key = 'useSubjCodes', object = prefs },
             },
          },
-         
 
          viewFactory:row {
             spacing = viewFactory:control_spacing(),
