@@ -156,7 +156,7 @@ function getSubjectAndSceneCodesFromKeywords(kwString)
         local isNumber = tonumber(word)
         --tonumber will return nil if it does not parse a number
         if isNumber ~= nil and isNumber ~= false then
-            myLogger:trace("Number found: " .. word)
+            -- myLogger:trace("Number found: " .. word)
             --Subject codes are larger than a 7-digit number
             if #word == 8 then subjectCodes[#subjectCodes+1] = word
             --Scene codes are larger than a 5-digit number
