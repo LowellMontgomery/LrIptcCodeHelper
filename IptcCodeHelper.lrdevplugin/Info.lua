@@ -8,7 +8,8 @@ return {
     LrSdkVersion = 3.0,
     LrSdkMinimumVersion = 1.3, -- minimum SDK version required by this plug-in
     LrToolkitIdentifier = 'photo.lowemo.lightroom.IptcCodeHelper',
-    LrPluginName = 'LoweMo IPTC Code Helper',
+    LrPluginInfoUrl = "http://LoweMo.photo/lightroom/IptcCodeHelper",
+    LrPluginName = 'IPTC Code Helper',
     LrExportMenuItems = menuItems,
     LrLibraryMenuItems = menuItems,
     LrPluginInfoProvider = 'IptcCodeHelperInfoProvider.lua',
