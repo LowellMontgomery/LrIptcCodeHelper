@@ -65,7 +65,7 @@ You can also use the Plugin Manager to install Lightroom plugins from *anywhere*
 ![Click the Add button at the bottom](lightroom-plugin-manager-add-button.jpg "Find and click the “Add” button")
 
 4. Locate the plugin, wherever you have downloaded it (here in a sub-folder within my Downloads directory)
-![Select the plugin you want to add to Lightroom](lightroom-plugin-manager-select-plugin.jpg "Select the plugin, from wherever you want to keep it")
+![Select the plugin you want to add to Lightroom](lightroom-plugin-manager-select-plugin.png "Select the plugin, from wherever you want to keep it")
 
 5. You should now see that the plugin is “installed and running”
 ![Lightroom Plugin Manager: Plugin Installed and Running](lightroom-plugin-manager-installed-running.png "In the plugin manager, you should now see that the IPTC Code Helper plugin is “installed and running”")
