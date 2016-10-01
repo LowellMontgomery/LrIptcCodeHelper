@@ -101,7 +101,7 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
             end
         end
     )
-        LrDialogs.message("Done copying IPTC codes.")
+    LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
     end)
 
 function writeCodes(photo, subjString, sceneString, genreString)
