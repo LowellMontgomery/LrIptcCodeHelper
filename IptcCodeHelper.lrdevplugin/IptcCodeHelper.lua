@@ -1,6 +1,7 @@
 local LrApplication = import 'LrApplication'   -- Import LR namespace which provides access to active catalog
 local LrDialogs = import 'LrDialogs'   -- Import LR namespace for user dialog functions
 local LrLogger = import 'LrLogger'
+local LrProgressScope = import 'LrProgressScope'
 local LrTasks = import 'LrTasks'       -- Import functions for starting async tasks
 
 -- Preferences:
@@ -17,26 +18,11 @@ local IptcIntelGenreParent = prefs.IptcIntelGenreParent
 local IptcProductGenreParent = prefs.IptcProductGenreParent
 local protectGenreCodes = prefs.protectGenreCodes
 
--- local useSubjCodes = true
--- local useSceneCodes = true
--- local protectSubjCodes = true
--- local protectSceneCodes = true
---
--- local useIntelGenre = true
--- local useProductGenre = true
--- local IptcIntelGenreParent = 'IPTC-GENRE'
--- local IptcProductGenreParent = 'IPTC-PRODUCT-GENRE'
--- local protectGenreCodes = true
-
 local AllGenreCodes = {}
 local topLevelKeywords = {}
 
 local myLogger = LrLogger('IPTC-Keyword-Copy-Plugin-Logfile')
 myLogger:enable("logfile")
-
--- function MyHWLibraryItem.outputToLog(message)
---     myLogger:trace(message)
--- end
 
 -- Log details of Lightroom version in use:
 local LrVers = LrApplication.versionTable()
@@ -44,10 +30,9 @@ local version =  tostring (LrVers['major'])
 local minor =  tostring (LrVers['minor'])
 local revision =  tostring (LrVers['revision'])
 local build = tostring (LrVers['build'])
-local version_string = version .. "." .. minor .. ", Rev: " .. revision .. "\nBuild: " .. build
+local version_string = version .. "." .. minor .. ", Rev: " .. revision .. "  Build: " .. build
 local message = "Using Lightroom major/minor version: " .. version_string
 myLogger:trace(message)
-
 
 -- local LrMobdebug = import 'LrMobdebug' -- Import LR/ZeroBrane debug module
 
@@ -55,36 +40,50 @@ myLogger:trace(message)
 LrTasks.startAsyncTask (function()          -- Certain functions in LR which access the catalog need to be wrapped in an asyncTask.
     -- LrMobdebug.on()                           -- Make this coroutine known to ZBS
     catalog = LrApplication.activeCatalog()   -- Get the active LR catalog. 
-    
+
     local cat_photos = catalog.targetPhotos
-    topLevelKeywords = catalog:getKeywords()
-    myLogger:trace("Keywords at top level: " .. table.concat(getKeywordNames(topLevelKeywords), ", "))
+    local topLevelKeywords = catalog:getKeywords()
     
     -- Collect Genre code terms if this functionality is active in prefs.
     if useIntelGenre ~= false or useProductGenre ~= false then
         if useIntelGenre ~= false then
             local iGParentKey = getKeywordByName(IptcIntelGenreParent, topLevelKeywords)
-            AllGenreCodes = getKeywordChildNamesTable(iGParentKey)
+            if iGParentKey == nil then
+                local errorText = 'Configured IPTC Intellectual Genre Parent term does not seem to exist: "' .. IptcIntelGenreParent .. '"'
+                local message = LOC '$$$/IptcCodeHelper/IptcIntelGenreParent/nonExistentIGParentMessage=' .. errorText
+                LrDialogs.message(string.format(message), 'ERROR');
+                return
+            else
+                AllGenreCodes = getKeywordChildNamesTable(iGParentKey)
+            end
+            
         end
-        
+
         if useProductGenre ~= false then
             local pGParentKey = getKeywordByName(IptcProductGenreParent, topLevelKeywords)
-            local pGenreCodes = getKeywordChildNamesTable(pGParentKey)
-            AllGenreCodes = tableMerge(pGenreCodes, AllGenreCodes)
+            if pGParentKey == nil then
+                local errorText = 'Configured IPTC Product Genre Parent term does not seem to exist: "' .. IptcProductGenreParent .. '"'
+                local message = LOC '$$$/IptcCodeHelper/IptcProductGenreParent/nonExistentPGParentMessage=' .. errorText
+                LrDialogs.message(string.format(message), 'ERROR');
+                return
+            else
+                local pGenreCodes = getKeywordChildNamesTable(pGParentKey)
+                AllGenreCodes = tableMerge(pGenreCodes, AllGenreCodes)
+            end
         end
     end
-    
+
     catalog:withWriteAccessDo("0",
         function(context)
             for i, photo in ipairs(cat_photos) do
-                filename = photo:getFormattedMetadata('fileName')
+                local filename = photo:getFormattedMetadata('fileName')
                 myLogger:trace("Processing photo: " .. filename)
-                LMKeywords = photo:getFormattedMetadata('keywordTags')
+                local LMKeywords = photo:getFormattedMetadata('keywordTags')
                 myLogger:trace("Photo keywords: " .. LMKeywords)
                 local genreString = ''
                 local sceneString = ''
                 local subjString = ''
-                
+
                 -- Deal with prefs for the next part:
                 if useSubjCodes or useSceneCodes then
                     subjString, sceneString = getSubjectAndSceneCodesFromKeywords(LMKeywords)
@@ -103,6 +102,37 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
     )
     LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
     end)
+
+function kwInTable(kw, tb)
+    kwid = kw.localIdentifier
+    for _, k in pairs(tb) do
+        if k.localIdentifier == kwid then return true end
+    end
+    return false
+end
+
+function getAncestryString(kw, ancestryString)
+    ancestryString = ancestryString or ''
+    local parent = kw:getParent()
+    if parent ~= nil then
+        ancestryString = parent:getName() .. "/" .. ancestryString
+        ancestryString = getAncestryString(parent, ancestryString)
+    end
+    return ancestryString
+end
+
+-- Return a comma-separated string listing all children of a term
+function getChildrenString(kw)
+    local kchildren = kw:getChildren()
+    if kchildren and #kchildren > 0 then
+        local kidnames = {}
+        for i, kid in ipairs(kchildren) do
+            kidnames[i] = kid:getName()
+        end
+        return table.concat(kidnames, ", ")
+    else return ""
+    end
+end
 
 function writeCodes(photo, subjString, sceneString, genreString)
     subjString = trim(subjString)
@@ -256,7 +286,7 @@ function inTable (val, t)
     if type(t) ~= "table" then
         return false
     else
-        for i, tval in pairs(t) do
+        for _, tval in pairs(t) do
             if val == tval then return true end
         end
     end
@@ -272,6 +302,7 @@ function getKeywordNames(keywords)
     return names
 end
 
+-- Basic trim functionality to remove whitespace from either end of a string
 function trim(s)
    if s == nil then return nil end
    return string.gsub(s, '^%s*(.-)%s*$', '%1')

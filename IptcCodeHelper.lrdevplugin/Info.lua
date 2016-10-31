@@ -5,8 +5,8 @@ local menuItems = {               -- Items that you add in LrExportMenuItems app
 }
 
 return {
-    LrSdkVersion = 3.0,
-    LrSdkMinimumVersion = 1.3, -- minimum SDK version required by this plug-in
+    LrSdkVersion = 5.0,
+    LrSdkMinimumVersion = 5.0, -- minimum SDK version required by this plug-in
     LrToolkitIdentifier = 'photo.lowemo.lightroom.IptcCodeHelper',
     LrPluginInfoUrl = "https://LoweMo.photo/lightroom-IptcCodeHelper",
     LrPluginName = 'IPTC Code Helper',

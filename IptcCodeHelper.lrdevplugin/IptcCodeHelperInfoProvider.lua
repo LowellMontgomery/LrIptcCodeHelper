@@ -151,7 +151,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
    }
 end
 
-function IptcCodeHelperInfoProvider.sectionsForBottomOfDialog(viewFactory, propertyTable)   
+function IptcCodeHelperInfoProvider.sectionsForBottomOfDialog(viewFactory, propertyTable)
    return {
       {
          title = LOC '$$$/IptcCodeHelper/Settings/License=Copyright and License',
