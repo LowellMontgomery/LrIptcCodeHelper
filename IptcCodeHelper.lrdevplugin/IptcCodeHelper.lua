@@ -21,16 +21,8 @@ local protectGenreCodes = prefs.protectGenreCodes
 local AllGenreCodes = {}
 local topLevelKeywords = {}
 
--- Variables used for processing keyword dupes
-local redundantKeywords = {}
-local flatKeywordsTable = {}
-local compareLowerCase = true
-
 local myLogger = LrLogger('IPTC-Keyword-Copy-Plugin-Logfile')
 myLogger:enable("logfile")
-
-local kwLogger = LrLogger('Lightroom-Redundant-Keywords-Report')
-kwLogger:enable("logfile")
 
 -- Log details of Lightroom version in use:
 local LrVers = LrApplication.versionTable()
@@ -51,12 +43,6 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
 
     local cat_photos = catalog.targetPhotos
     local topLevelKeywords = catalog:getKeywords()
-
-    -- Identify Keywords we may wish to merge
-    findRedundantKeywords(topLevelKeywords)
-    printRedundantKeywordsTable()
-
-    myLogger:trace("Keywords at top level: " .. table.concat(getKeywordNames(topLevelKeywords), ", "))
     
     -- Collect Genre code terms if this functionality is active in prefs.
     if useIntelGenre ~= false or useProductGenre ~= false then
@@ -117,51 +103,6 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
     LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
     end)
 
-function findRedundantKeywords(keywords)
-    for _, kw in pairs(keywords) do
-        local term = kw:getName()
-        --Skip location terms as these will not be in the exported/shared tree
-        if term ~= '_All-image-LOCATIONS' then
-            if flatKeywordsTable[term] == nil then
-                flatKeywordsTable[term] = { kw }
-            else
-                local num = #flatKeywordsTable[term] + 1
-                flatKeywordsTable[term][num] = kw
-                redundantKeywords[term] = flatKeywordsTable[term]
-            end
-            -- Recursive call to process any children
-            local kids = kw:getChildren()
-            if #kids > 0 then
-                findRedundantKeywords(kids)
-            end
-        end
-    end
-end
-
---Returns array of keywords with a given name
-function getAllKeywordsByName(name, keywords, found)
-    found = found or {}
-    if type(found) == 'LrKeyword' then
-        found = {found}
-        elseif type(found) ~= 'table' then
-            found = {}
-    end
-    for i, kw in pairs(keywords) do
-        -- If we have found the keyword we want, return it:
-        if kw:getName() == name and kwInTable(kw, found) == false then
-            found[#found + 1] = kw
-        -- Otherwise, use recursion to check next level if kw has child keywords:
-        else
-            local kchildren = kw:getChildren()
-            if #kchildren > 0 then
-                found = getAllKeywordsByName(name, kchildren, found)
-            end
-        end
-    end
-    -- By now, we should have them all
-    return found
-end
-
 function kwInTable(kw, tb)
     kwid = kw.localIdentifier
     for _, k in pairs(tb) do
@@ -169,36 +110,6 @@ function kwInTable(kw, tb)
     end
     return false
 end
-
-function logRedundantKeyword(term, redKeys)
-    kwLogger:trace("Term: " .. term)
-    for _, kw in pairs(redKeys) do
-        local ancestry = getAncestryString(kw)
-        local synTable = kw:getSynonyms() or {}
-        local syns = ''
-        if #synTable then
-            syns = table.concat(synTable, ", ")
-        end
-        if syns ~= '' then syns = " (Synonyms: " .. syns .. ")" end
-        local photos = kw:getPhotos()
-        local photo_use = " with " .. #photos .. " photos"
-        kwLogger:trace("    In:" .. ancestry .. photo_use .. syns)
-        local kidstring = getChildrenString(kw)
-        if kidstring and #kidstring > 50 then
-            kidstring = string.sub(kidstring, 1, 50) .. " ..."
-        end
-        if #kidstring > 0 then
-            kwLogger:trace("      (Children: " .. kidstring .. ")")
-        end
-    end
-end
-
-function printRedundantKeywordsTable()
-    for term, keywords in pairs(redundantKeywords) do
-        logRedundantKeyword(term, keywords)
-    end
-end
-
 
 function getAncestryString(kw, ancestryString)
     ancestryString = ancestryString or ''
@@ -222,7 +133,6 @@ function getChildrenString(kw)
     else return ""
     end
 end
-
 
 function writeCodes(photo, subjString, sceneString, genreString)
     subjString = trim(subjString)
