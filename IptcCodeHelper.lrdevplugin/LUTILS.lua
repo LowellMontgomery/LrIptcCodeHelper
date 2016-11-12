@@ -46,38 +46,34 @@ end
 -- Given a string and delimiter (e.g. ', '), break the string into parts and return as table
 -- This works like PHP's explode() function.
 function LUTILS.split(s, delim)
-   if (delim == '') then return false end
-   local pos = 0
-   local t = {}
-   -- For each delimiter found, add to return table
-   for st, sp in function() return string.find(s, delim, pos, true) end do
-      -- Get chars to next delimiter and insert in return table
-      t[#t + 1] = string.sub(s, pos, st - 1)
-      -- Move past the delimiter
-      pos = sp + 1
-   end
+    if (delim == '') then return false end
+    local pos = 0
+    local t = {}
+    -- For each delimiter found, add to return table
+    for st, sp in function() return string.find(s, delim, pos, true) end do
+        -- Get chars to next delimiter and insert in return table
+        t[#t + 1] = string.sub(s, pos, st - 1)
+        -- Move past the delimiter
+       pos = sp + 1
+    end
    -- Get chars after last delimiter and insert in return table
-   t[#t + 1] = string.sub(s, pos)
+    t[#t + 1] = string.sub(s, pos)
 
-   return t;
+    return t;
 end
 
 -- Merge two tables (like PHP array_merge())
-function LUTILS.tableMerge(t1, t2)
-    for k, v in pairs(t2) do
-        if (type(v) == "table") and (type(t1[k] or false) == "table") then
-            LUTILS.tableMerge(t1[k], t2[k])
-        else
-            t1[k] = v
-        end
+function LUTILS.tableMerge(table1, table2)    
+    for i=1,#table2 do
+        table1[#table1 + 1] = table2[i]
     end
-    return t1;
+    return table1;
 end
 
 -- Basic trim functionality to remove whitespace from either end of a string
 function LUTILS.trim(s)
-   if s == nil then return nil end
-   return string.gsub(s, '^%s*(.-)%s*$', '%1');
+    if s == nil then return nil end
+    return string.gsub(s, '^%s*(.-)%s*$', '%1');
 end
 
 return LUTILS;

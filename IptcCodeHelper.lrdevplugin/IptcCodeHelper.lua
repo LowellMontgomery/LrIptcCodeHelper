@@ -17,9 +17,12 @@ local protectSceneCodes = prefs.protectSceneCodes
 
 local useIntelGenre = prefs.useIntelGenre
 local useProductGenre = prefs.useProductGenre
-local IptcIntelGenreParent = prefs.IptcIntelGenreParent
-local IptcProductGenreParent = prefs.IptcProductGenreParent
+local IptcIntelGenreParent = LUTILS.trim(prefs.IptcIntelGenreParent)
+local IptcProductGenreParent = LUTILS.trim(prefs.IptcProductGenreParent)
 local protectGenreCodes = prefs.protectGenreCodes
+
+local iptcSubjectParentName = LUTILS.trim(prefs.IptcSubjectParent)
+local iptcSceneParentName = LUTILS.trim(prefs.IptcSceneParent)
 
 local AllGenreCodes = {}
 local topLevelKeywords = {}
@@ -76,8 +79,90 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
         end
     end
 
-    catalog:withWriteAccessDo("0",
-        function(context)
+    -- If configured to add new keywords (parent codes and/or inferable Subject and/or Scene Codes),
+    -- iterate over all photos and perform this process. This is separate as it may be (or bigger sets of images)
+    -- that this is more time-consuming and requires a prolonged write access. It must also happen before the copy
+    -- process and requires several steps, so it breaks that up.
+    if prefs.autoAddParents == true or prefs.autoAddCodes == true then
+        catalog:withWriteAccessDo("0", function(context)
+                for i, photo in ipairs(cat_photos) do
+                    local filename = photo:getFormattedMetadata('fileName')
+                    if prefs.autoAddParents then
+                        myLogger:trace("Adding parent terms for photo: " .. filename)
+                        local addedKeywords = KwUtils.addAllKeywordParentsForPhoto(photo)
+                        if addedKeywords ~= {} then
+                            local addedKeywordsNames = KwUtils.getKeywordNames(addedKeywords)
+                            local addedKeywordsString = table.concat(addedKeywordsNames, ", ")
+                            myLogger:trace("Parent terms added for photo: " .. addedKeywordsString)
+                        else
+                            myLogger:trace("No new parent keywords added for photo")
+                        end
+                    end
+                    -- Now we can check for codes to auto-add, if this is configured
+                    if prefs.autoAddCodes == true then
+                        local keywordsForPhoto = photo:getRawMetadata('keywords')
+                        local iptcSubjectParentKey = nil
+                        local iptcSceneParentKey = nil
+                        local inferableCodeKeywords = {}
+                        local existingCodeKeywords = {}
+                        if iptcSubjectParentName ~= '' then
+                            iptcSubjectParentKey = KwUtils.getKeywordByName(iptcSubjectParentName, topLevelKeywords)
+                        end
+                        if IptcSceneParentName ~= '' then
+                            iptcSceneParentKey = KwUtils.getKeywordByName(iptcSceneParentName, topLevelKeywords)
+                        end
+                        -- Iterate over existing keywords.
+                        for _,kw in pairs(keywordsForPhoto) do
+                            local keyName = kw:getName()
+                            local keyType = keywordType(keyName)
+                            -- Let's assume that if we have a code keyword already selected, then we also have its direct parent
+                            -- so we can skip adding parents for the "code keyword".
+                            if keyType ~= 'standard' then
+                                existingCodeKeywords[#existingCodeKeywords + 1] = kw
+                            else
+                                local keyParents = KwUtils.getAllParentKeywords(kw)
+                                local keyPlusParents = type(keyParents) == 'table' and LUTILS.tableMerge(keyParents, {kw}) or {kw}
+
+                                if iptcSubjectParentKey ~= nil and KwUtils.kwInTable(iptcSubjectParentKey, keyParents) then
+                                    -- See if kw or parents has a child term which is a code and add to inferableCodeKeywords, if so:
+                                    for _,key in pairs(keyPlusParents) do
+                                        local keyKids = key:getChildren()
+                                        for _,kid in pairs(kwKids) do
+                                            local kidName = kid:getName()
+                                            local kidType = keywordType(kidName)
+                                            if kidType ~= 'standard' and KwUtils.kwInTable(kid, keywordsForPhoto) == false and KwUtils.kwInTable(kid, inferableCodeKeywords) == false then
+                                                inferableCodeKeywords[#inferableCodeKeywords + 1] = kid
+                                            end
+                                        end
+                                    end
+                                elseif iptcSceneParentKey ~= nil and KwUtils.kwInTable(iptcSceneParentKey, keyParents) then
+                                    for _,key in pairs(keyPlusParents) do
+                                        local keyKids = key:getChildren()
+                                        for _,kid in pairs(kwKids) do
+                                            local kidName = kid:getName()
+                                            local kidType = keywordType(kidName)
+                                            if kidType ~= 'standard' and KwUtils.kwInTable(kid, keywordsForPhoto) == false and KwUtils.kwInTable(kid, inferableCodeKeywords) == false then
+                                                inferableCodeKeywords[#inferableCodeKeywords + 1] = kid
+                                            end
+                                        end
+                                    end 
+                                end
+                            end
+                        end
+                        if inferableCodeKeywords ~= {} then
+                            for _,kwToAdd in pairs(inferableCodeKeywords) do
+                                photo:addKeyword(kwToAdd)
+                            end
+                            local inferableCodeKeywordNames = KwUtils.getKeywordNames(inferableCodeKeywords)
+                            local inferableCodeKeywordsString = table.concat(inferableCodeKeywordNames, ", ")
+                            myLogger:trace("Added code keywords: " .. inferableCodeKeywordsString)
+                        end
+                    end 
+                end
+                end);
+    end
+    -- Do the actual copying of codes to the IPTC fields
+    catalog:withWriteAccessDo("0", function(context)
             for i, photo in ipairs(cat_photos) do
                 local filename = photo:getFormattedMetadata('fileName')
                 myLogger:trace("Processing photo: " .. filename)
@@ -101,10 +186,10 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                 end
                 writeCodes(photo, subjString, sceneString, genreString)
             end
-        end
-    )
+            end);
     LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
-    end)
+
+end)
 
 function writeCodes(photo, subjString, sceneString, genreString)
     subjString = LUTILS.trim(subjString)
@@ -180,4 +265,19 @@ function getGenreCodesFromKeywords(KeywordTable)
         end
     end
     return table.concat(genreTermsForPhoto, ", ")
+end
+
+function keywordType(keyName)
+    local isNumber = tonumber(keyName)
+    --tonumber will return nil if it does not parse a number
+    if isNumber ~= nil and isNumber ~= false then
+        -- myLogger:trace("Number found: " .. word)
+        --Subject codes are larger than a 7-digit number
+        if #keyName == 8 then return 'subject'
+        --Scene codes are larger than a 5-digit number
+            elseif #keyName == 6 then return 'scene'
+        end
+    end
+    -- Not a subject or scene code, but a normal keyword
+    return 'standard'
 end

@@ -15,8 +15,8 @@ Utility functions for Lightroom Keywords
     http://creativecommons.org/licenses/by/3.0/deed.en_US
 
     This bundle may be used for any purpose, provided that the copyright notice
-    and web-page links, above, as well as the 'AUTHOR_NOTE' string, below are
-    maintained. Enjoy.
+    and web-page links, above, as well as the 'AUTHOR_NOTE' and 'Attribution'
+    strings, below are maintained. Enjoy.
 ------------------------------------------------------------------------------]]
 
 local prefs = import 'LrPrefs'.prefsForPlugin(_PLUGIN.id)
@@ -25,26 +25,70 @@ local LUTILS = require 'LUTILS'
 local KwUtils = {}
 
 KwUtils.VERSION = 20161101.01 -- version history at end of file
-KwUtils.AUTHOR_NOTE = "KwUtils.lua Lightroom keyword utility functions by Lowell Montgomery (https://lowemo.photo/lightroom-keyword-utils) version: " .. KwUtils.VERSION
+KwUtils.AUTHOR_NOTE = "KwUtils.lua is a set of Lightroom keyword utility functions, © 2016 by Lowell Montgomery (https://lowemo.photo/lightroom-keyword-utils) version: " .. KwUtils.VERSION
+
+-- The following provides an 80 character-width attribution text that can be inserted for display
+-- in a plugin derived using these helper functions.
+KwUtils.Attribution = "This plugin uses KwUtils, Lightroom keyword utilities, © 2016 by Lowell Montgomery\n (https://lowemo.photo/lightroom-keyword-utils) version: " .. KwUtils.VERSION .. "\n\nThis code is released under a Creative Commons CC-BY “Attribution” License:\n http://creativecommons.org/licenses/by/3.0/deed.en_US"
 
 function KwUtils.addKeywordWithParents(photo, keyword)
-   photo:addKeyword(keyword)
-   parent = keyword:getParent() 
-   if parent ~= nil then
-      KwUtils.addKeywordWithParents(photo, parent)
-   end
+    photo:addKeyword(keyword)
+    parent = keyword:getParent() 
+    if parent ~= nil then
+        KwUtils.addKeywordWithParents(photo, parent)
+    end
+end
+
+-- Call this function with just a keyword object. This recursively calls kw:getParent,
+-- adding each parent to the table of parent keywords. When the top of the hierarchy
+-- is reached, the "ancestry table" of keywords is returned.
+function KwUtils.getAllParentKeywords(kw, parents)
+    -- Set parents to empty table if not already existing
+    parents = parents ~= nil and parents or {}
+    p = kw:getParent()
+    if p ~= nil then
+        parents[#parents + 1] = p
+        KwUtils.getAllParentKeywords(p, parents)
+    else
+        return parents
+    end
+end
+
+-- A photo may have keywords selected without the parent keywords actually being
+-- selected. Although any parents not set to be suppressed on export will be
+-- included during the export process, the photo will not show up in the library
+-- if you filter by the such a term. This function explicitly adds all keyword parents.
+function KwUtils.addAllKeywordParentsForPhoto(photo)
+    local keywordsForPhoto = photo:getRawMetadata('keywords')
+    local keywordsToAdd = {}
+    for _, kw in pairs(keywordsForPhoto) do
+        local kwParents = KwUtils.getAllParentKeywords(kw)
+        if kwParents ~= nil and kwParents ~= {} then
+            for _,parentKey in pairs(kwParents) do
+                if KwUtils.kwInTable(parentKey, keywordsForPhoto) ~= true and KwUtils.kwInTable(parentKey, keywordsToAdd) ~= true then
+                    keywordsToAdd[#keywordsToAdd + 1] = parentKey
+                end
+            end
+        end
+    end
+    
+    for _, kwToAdd in pairs(keywordsToAdd) do
+        photo:addKeyword(kwToAdd)
+    end
+    -- Return the keywords which have been added
+    return keywordsToAdd
 end
 
 -- Add or remove a keyword based on the "state" of the associated checkbox.
 -- Presumed is that we call this when the state differs from what is already on this image,
 -- i.e. that they keyword is being changed for the photo (added or removed)
 function KwUtils.addOrRemoveKeyword(photo, keyword, state)
-   if state then
-      KwUtils.addKeywordWithParents(photo, keyword)
-   else
+    if state then
+        KwUtils.addKeywordWithParents(photo, keyword)
+    else
       -- We cannot assume parents should be removed if already there.
-      photo:removeKeyword(keyword)
-   end
+        photo:removeKeyword(keyword)
+    end
 end
 
 --Returns array of keywords with a given name
@@ -71,6 +115,7 @@ function KwUtils.getAllKeywordsByName(name, keywords, found)
     return found
 end
 
+
 -- Gets string representing a keywords parent names in hierarchical order, e.g.
 -- "TOP_LEVEL_CATEGORY | second_level_parent | parent"
 function KwUtils.getAncestryString(kw, ancestryString)
@@ -92,15 +137,12 @@ function KwUtils.getChildrenString(kw)
     end
 end
 
---General Lightroom API helper functions for keywords
+-- Find a keyword by a given name within a table of keyword objects
+-- arg: lookfor  Name of keyword to search for
+-- arg: keywordSet  Table of keywords, usually the top level keywords returned by Lightroom
+-- API call to catalog:getKeywords(). If the sought keyword is not found
+-- any "branches" of child terms are also examined (by recursive calls to this function)
 function KwUtils.getKeywordByName(lookfor, keywordSet)
-    local typeKeywordSet = type(keywordSet)
-    if typeKeywordSet ~= "table" then
-        LrDialogs = import 'LrDialogs'
-        errorText = "Expected table, but found '" .. typeKeywordSet .. "' with value '" .. tostring(keywordSet) .. "'"
-        local message = LOC '$$$/KwUtils/getKeywordByName/wrongTypeForKeywordSet=' .. errorText
-        LrDialogs.message(string.format(message), 'ERROR');
-    end
     for i, kw in pairs(keywordSet) do
         -- If we have found the keyword we want, return it:
         if kw:getName() == lookfor then
@@ -120,7 +162,6 @@ function KwUtils.getKeywordByName(lookfor, keywordSet)
     return nil
 end
 
-
 --General Lightroom API helper functions for keywords
 function KwUtils.getKeywordChildNamesTable(parentKey)
     local kchildren = parentKey:getChildren()
@@ -136,48 +177,49 @@ end
 function KwUtils.getKeywordNames(keywords)  
     local names = {}
     for i, kw in pairs(keywords) do
-       names[#names +1] = kw:getName() 
+        names[#names +1] = kw:getName() 
     end
     return names;
 end
 
 -- Get existing keywords for a photo which are not in a given set (table)
 function KwUtils.getOtherKeywords(photo, keywords)
-   photoKeywordList = photo:getFormattedMetadata('keywordTags')
-   local photoKeywords = LUTILS.split(photoKeywordList, ', ')
-   local ret = {}
+    local photoKeywordList = photo:getFormattedMetadata('keywordTags')
+    local photoKeywords = LUTILS.split(photoKeywordList, ', ')
+    local ret = {}
 
-   for _, key in ipairs(photoKeywords) do
-      if not LUTILS.inTable(key, keywords) then
-         ret[#ret + 1] = key
-      end
-   end
-   
-   return ret
+    for _, key in ipairs(photoKeywords) do
+        if not LUTILS.inTable(key, keywords) then
+            ret[#ret + 1] = key
+        end
+    end
+
+    return ret
 end
 
 -- Check for actual keyword (by keyword ID) associated with a photo
 function KwUtils.hasKeywordById(photo, keyword)
-   kwid = keyword.localIdentifier
-   keywordsForPhoto = photo:getRawMetadata('keywords')
-   for _, k in pairs(keywordsForPhoto) do
-      if k.localIdentifier == kwid then
-         return true
-      end
-   end
-   return false
+    local kwid = keyword.localIdentifier
+    local keywordsForPhoto = photo:getRawMetadata('keywords')
+    for _, k in pairs(keywordsForPhoto) do
+        if k.localIdentifier == kwid then
+            return true
+        end
+    end
+    return false
 end
 
 -- Check if photo already has a particular keyword (by name)
 function KwUtils.hasKeywordByName(photo, keyword)
-   local photoKeywordList = string.lower(photo:getFormattedMetadata('keywordTags'))
-   local photoKeywordTable = LUTILS.split(photoKeywordList, ', ')
-   return LUTILS.inTable(keyword, photoKeywordTable)
+    local photoKeywordList = string.lower(photo:getFormattedMetadata('keywordTags'))
+    local photoKeywordTable = LUTILS.split(photoKeywordList, ', ')
+    return LUTILS.inTable(keyword, photoKeywordTable)
 end
 
 -- Return true if a keyword is in a table of keywords. Checks keyword ID.
 function KwUtils.kwInTable(kw, tb)
-    kwid = kw.localIdentifier
+    if type(tb) ~= 'table' then return nil end
+    local kwid = kw.localIdentifier
     for _, k in pairs(tb) do
         if k.localIdentifier == kwid then return true end
     end
@@ -185,3 +227,6 @@ function KwUtils.kwInTable(kw, tb)
 end
 
 return KwUtils
+
+-- 20161101.01 Initial release.
+--    It includes functions I had found myself writing and re-writing in various plugins.
