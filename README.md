@@ -83,12 +83,15 @@ Each of the IPTC controlled vocabulary fields has separate checkboxes for:
 1. setting whether to operate on that IPTC vocabulary, and
 2. setting whether to protect any existing field value from being cleared (if no corresponding keywords are selected)
 
-![Lightroom IptcCodeHelper UI](Lightroom-IptcCodeHelper-UI.png)
+![Settings for IPTC Subject and Scene Codes](Lightroom-IptcCodeHelper-subject-and-scene-code-settings.png)
+
 
 For users of the LoweMo Lightroom Keyword CV, the top-level IPTC “parent terms” are already entered into the corresponding fields. These fields are provided to allow anyone else (or anyone who may have renamed those terms), to make full use of the plugin. Note that such top-level terms MUST be uniquely named within your keyword vocabulary. And **be sure to make corresponding changes to the settings in the Plugin Manager if you ever do rename those keywords**.
 
 ### Genre Settings and Our Approach
 In the case of the “Genre” vocabularies, this is a bit different. Our current approach is to put both Intellectual and Product Genre keywords into the one (“Intellectual Genre”) field since the Product Genre field does not exist and Adobe does not really provide for exporting photos with added fields. For most of us, the “Product Genre” terms are more appropriate for describing our images and “Intellectual Genre” keywords are less relevant to photo media. (For example, a photo of someone *might* be useful in an obituary *at some point*, but should we *really* be adding *that* tag for “the day when…”?) Other “Intellectual Genre” term clearly are not used in the way that we normally describe photographic media, e.g. "Background", one of the terms, has nothing to do with an image you might use as the bottom layer of a composition. It could be better called "back-story", i.e. the use description for “Background”, as seen on the [IPTC newscodes site](http://cv.iptc.org/newscodes/genre/ "Human readable IPTC genre newscodes") is "The object provides some scene setting and explanation for the event being reported." So it's all about reportage.
+
+![Lightroom IptcCodeHelper Genre Settings](Lightroom-IptcCodeHelper-GenreSettings.png)
 
 ### Settings for Adding Parents and Related IPTC Keyword Codes
 I've recently been working to help make a couple of other open-source plugins more useful; these plugins interface with “visual keywording” computer-based-learning technologies via the Web. A small JPEG is exported and sent to the service and it returns appropriate keywords. But the plugins that supported this didn't respect a hierarchical vocabulary, so would add new terms at the base of my keyword vocabulary (or under a designated parent for "new keywords"). After keywording a batch this way, I would need to spend time finding the terms in my list and migrating from the new terms to the pre-existing ones and deleting the new terms. This wasn't fun; it was tedious. The time it took to sort out merging of those terms took so long that it just didn't make any sense to use the plugins. But then I worked on improving these plugins to help them use the existing keywords within my hierarchical keyword list. And then I realized that some of the IPTC codes could be automatically inserted if I made some small tweaks to my workflow. My LoweMo.photo hierarchical keyword list includes, where possible, additional keywords *within* the IPTC subject/media topic hierarchy so that by selecting a common term, e.g. “smog”, in this example, we are ready to select a number of related IPTC subject terms, “smog” fits nicely as a sub-category of "air pollution" (an IPTC media-topic term). So it was then “only” a matter of expanding the tree and selecting all parent terms for any terms inserted by my auto-tagging process as well as all of the code (numerical child terms of the human-readable ones). After some improvements to this plugin, I no longer need to expand the whole vocabulary tree to select all of the parent terms and media topic codes. Instead, it can be done “automagically”.
@@ -100,8 +103,9 @@ If you select the plugin settings for **“Add all parent keywords for selected 
 ![Add Parent Keywords And Related Iptc Codes](add-parent-keywords-and-related-iptc-codes.png)
 
 ***Caveats*:**
-1. Full support requires a keyword list with the kind of structure you see in this screenshot, e.g. the LoweMo.photo keyword list I've been working on
-2. This feature is not enabled by default when you install this plugin, since some people might not want to have all parent keywords explicitly selected (note that this does not mean they will all be exported—all parents not set to be suppressed on export would be exported anyway, but those set to be suppressed would just help for filtering by branches of your keyword hierarchy)
+
+1. Full support requires a keyword list with the kind of structure you see in this screenshot, e.g. the LoweMo.photo keyword list I've been working on.
+2. This feature is not enabled by default when you install this plugin, since some people might not want to have all parent keywords explicitly selected (note that this does not mean they will all be exported—all parents not set to be suppressed on export would be exported anyway, but those set to be suppressed would just help for filtering by branches of your keyword hierarchy).
 3. Adding the “inferable codes” only works within the Subject (Media topic) and Scene codes branches if a selected human readable keyword is a direct parent of the IPTC code that you want to have selected. For it to work, the top level keywords for these sections of your keyword list must be entered in the corresponding “Parent Keyword” fields.
 
 ## Using the IPTC Code Helper Lightroom Plugin
