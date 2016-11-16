@@ -69,82 +69,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
             },
          },
       },
-      
-      {
-         title = LOC '$$$/IptcCodeHelper/Settings/SpecialAddKeywordSettings=Settings for adding parent and related IPTC keyword codes',
-         viewFactory:static_text {
-            width_in_chars = 90,
-            height_in_lines = 7,
-            text_color = LrColor('blue'),
-            title = specialAddKeywordSettingsNotice
-         },
-         viewFactory:row {
-            spacing = viewFactory:control_spacing(),
-
-            viewFactory:checkbox {
-               title = LOC '$$$/IptcCodeHelper/Settings/addParentKeys=Add all parent keywords for selected keywords',
-               tooltip = 'Check this box to have this plugin automatically add all parent (ancestor) keywords to photos.',
-               value = bind { key = 'autoAddParents', object = prefs },
-            },
-         },
-         viewFactory:separator { fill_horizontal = 1 },
-         
-         
-         viewFactory:row {
-            viewFactory:static_text {
-               title = LOC '$$$/IptcCodeHelper/Settings/NoteRegardingAutoAddingCodes=Note: Use of following options requires a specially formatted keyword vocabulary',
-               font = '<system/bold>',
-               text_color = LrColor('red'),
-               alignment = 'right',
-            },
-         },
-         
-         viewFactory:row {
-            spacing = viewFactory:control_spacing(),
-
-            viewFactory:checkbox {
-               title = LOC '$$$/IptcCodeHelper/Settings/addRelatedIptcCodes=Add all inferable IPTC codes',
-               tooltip = 'Adds direct child terms of any selected keywords if the child term appears to be an IPTC subject or scene code.',
-               value = bind { key = 'autoAddCodes', object = prefs },
-            },
-         },
-         viewFactory:row {
-            spacing = viewFactory:label_spacing(),
-
-            viewFactory:static_text {
-               title = LOC '$$$/IptcCodeHelper/Settings/IptcSubjectParent=Parent Keyword for IPTC Subject (Media topic) Codes:',
-               tooltip = 'Parent keyword (without hierarchy) for IPTC Subject (or Media Topic) keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
-               alignment = 'right',
-            },
-
-         -- IPTC Intellectual Genre parent keyword
-            viewFactory:edit_field {
-               tooltip = 'Parent keyword (without hierarchy) for IPTC Subject (or Media Topic) keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
-               fill_horizonal = 1,
-               width_in_chars = 35,
-               value = bind { key = 'IptcSubjectParent', object = prefs },
-            },
-         },
-         viewFactory:row {
-            spacing = viewFactory:label_spacing(),
-
-            viewFactory:static_text {
-               title = LOC '$$$/IptcCodeHelper/Settings/IptcSceneParent=Parent Keyword for IPTC Scene keywords/codes:',
-               tooltip = 'Parent keyword (without hierarchy) for IPTC Scene keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
-               alignment = 'right',
-            },
-
-         -- IPTC Intellectual Genre parent keyword
-            viewFactory:edit_field {
-               tooltip = 'Parent keyword (without hierarchy) for IPTC Scene keywords/codes. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
-               fill_horizonal = 1,
-               width_in_chars = 35,
-               value = bind { key = 'IptcSceneParent', object = prefs },
-            },
-         },
-         
-      },
-      
+	  
       {
          title = LOC '$$$/IptcCodeHelper/Settings/IntelGenreKeywords=Settings for IPTC Genre codes',
          viewFactory:static_text {
@@ -228,6 +153,82 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
          },
          
       },
+      
+      {
+         title = LOC '$$$/IptcCodeHelper/Settings/SpecialAddKeywordSettings=Settings for adding parent and related IPTC keyword codes',
+         viewFactory:static_text {
+            width_in_chars = 90,
+            height_in_lines = 7,
+            text_color = LrColor('blue'),
+            title = specialAddKeywordSettingsNotice
+         },
+         viewFactory:row {
+            spacing = viewFactory:control_spacing(),
+
+            viewFactory:checkbox {
+               title = LOC '$$$/IptcCodeHelper/Settings/addParentKeys=Add all parent keywords for selected keywords',
+               tooltip = 'Check this box to have this plugin automatically add all parent (ancestor) keywords to photos.',
+               value = bind { key = 'autoAddParents', object = prefs },
+            },
+         },
+         viewFactory:separator { fill_horizontal = 1 },
+         
+         
+         viewFactory:row {
+            viewFactory:static_text {
+               title = LOC '$$$/IptcCodeHelper/Settings/NoteRegardingAutoAddingCodes=Note: Use of following options requires a specially formatted keyword vocabulary',
+               font = '<system/bold>',
+               text_color = LrColor('red'),
+               alignment = 'right',
+            },
+         },
+         
+         viewFactory:row {
+            spacing = viewFactory:control_spacing(),
+
+            viewFactory:checkbox {
+               title = LOC '$$$/IptcCodeHelper/Settings/addRelatedIptcCodes=Add all inferable IPTC codes',
+               tooltip = 'Adds direct child terms of any selected keywords if the child term appears to be an IPTC subject or scene code.',
+               value = bind { key = 'autoAddCodes', object = prefs },
+            },
+         },
+         viewFactory:row {
+            spacing = viewFactory:label_spacing(),
+
+            viewFactory:static_text {
+               title = LOC '$$$/IptcCodeHelper/Settings/IptcSubjectParent=Parent Keyword for IPTC Subject (Media topic) Codes:',
+               tooltip = 'Parent keyword (without hierarchy) for IPTC Subject (or Media Topic) keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
+               alignment = 'right',
+            },
+
+         -- IPTC Intellectual Genre parent keyword
+            viewFactory:edit_field {
+               tooltip = 'Parent keyword (without hierarchy) for IPTC Subject (or Media Topic) keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
+               fill_horizonal = 1,
+               width_in_chars = 35,
+               value = bind { key = 'IptcSubjectParent', object = prefs },
+            },
+         },
+         viewFactory:row {
+            spacing = viewFactory:label_spacing(),
+
+            viewFactory:static_text {
+               title = LOC '$$$/IptcCodeHelper/Settings/IptcSceneParent=Parent Keyword for IPTC Scene keywords/codes:',
+               tooltip = 'Parent keyword (without hierarchy) for IPTC Scene keywords. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
+               alignment = 'right',
+            },
+
+         -- IPTC Intellectual Genre parent keyword
+            viewFactory:edit_field {
+               tooltip = 'Parent keyword (without hierarchy) for IPTC Scene keywords/codes. This term MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
+               fill_horizonal = 1,
+               width_in_chars = 35,
+               value = bind { key = 'IptcSceneParent', object = prefs },
+            },
+         },
+         
+      },
+      
    }
 end
 
