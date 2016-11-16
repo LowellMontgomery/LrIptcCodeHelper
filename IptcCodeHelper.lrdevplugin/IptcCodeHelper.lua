@@ -17,14 +17,14 @@ local protectSceneCodes = prefs.protectSceneCodes
 
 local useIntelGenre = prefs.useIntelGenre
 local useProductGenre = prefs.useProductGenre
-local IptcIntelGenreParent = LUTILS.trim(prefs.IptcIntelGenreParent)
-local IptcProductGenreParent = LUTILS.trim(prefs.IptcProductGenreParent)
+local iptcIntelGenreParent = LUTILS.trim(prefs.iptcIntelGenreParent)
+local iptcProductGenreParent = LUTILS.trim(prefs.iptcProductGenreParent)
 local protectGenreCodes = prefs.protectGenreCodes
 
 local iptcSubjectParentName = LUTILS.trim(prefs.IptcSubjectParent)
 local iptcSceneParentName = LUTILS.trim(prefs.IptcSceneParent)
 
-local AllGenreCodes = {}
+local allGenreCodes = {}
 local topLevelKeywords = {}
 
 local myLogger = LrLogger('IPTC-Keyword-Copy-Plugin-Logfile')
@@ -40,41 +40,38 @@ local version_string = version .. "." .. minor .. ", Rev: " .. revision .. "  Bu
 local message = "Using Lightroom major/minor version: " .. version_string
 myLogger:trace(message)
 
--- local LrMobdebug = import 'LrMobdebug' -- Import LR/ZeroBrane debug module
-
 -- Connect with the ZBS debugger server.
-LrTasks.startAsyncTask (function()          -- Certain functions in LR which access the catalog need to be wrapped in an asyncTask.
-    -- LrMobdebug.on()                           -- Make this coroutine known to ZBS
-    catalog = LrApplication.activeCatalog()   -- Get the active LR catalog. 
+LrTasks.startAsyncTask (Debug.showErrors(function()           -- Certain functions in LR which access the catalog need to be wrapped in an asyncTask.
+    local catalog = LrApplication.activeCatalog()   -- Get the active LR catalog.
 
     local cat_photos = catalog.targetPhotos
     local topLevelKeywords = catalog:getKeywords()
-    
+
     -- Collect Genre code terms if this functionality is active in prefs.
     if useIntelGenre ~= false or useProductGenre ~= false then
         if useIntelGenre ~= false then
-            local iGParentKey = KwUtils.getKeywordByName(IptcIntelGenreParent, topLevelKeywords)
+            local iGParentKey = KwUtils.getKeywordByName(iptcIntelGenreParent, topLevelKeywords)
             if iGParentKey == nil then
-                local errorText = 'Configured IPTC Intellectual Genre Parent term does not seem to exist: "' .. IptcIntelGenreParent .. '"'
-                local message = LOC '$$$/IptcCodeHelper/IptcIntelGenreParent/nonExistentIGParentMessage=' .. errorText
+                local errorText = 'Configured IPTC Intellectual Genre Parent term does not seem to exist: "' .. iptcIntelGenreParent .. '"'
+                local message = LOC '$$$/IptcCodeHelper/iptcIntelGenreParent/nonExistentIGParentMessage=' .. errorText
                 LrDialogs.message(string.format(message), 'ERROR');
                 return
             else
-                AllGenreCodes = KwUtils.getKeywordChildNamesTable(iGParentKey)
+                allGenreCodes = KwUtils.getKeywordChildNamesTable(iGParentKey)
             end
-            
+
         end
 
         if useProductGenre ~= false then
-            local pGParentKey = KwUtils.getKeywordByName(IptcProductGenreParent, topLevelKeywords)
+            local pGParentKey = KwUtils.getKeywordByName(iptcProductGenreParent, topLevelKeywords)
             if pGParentKey == nil then
-                local errorText = 'Configured IPTC Product Genre Parent term does not seem to exist: "' .. IptcProductGenreParent .. '"'
-                local message = LOC '$$$/IptcCodeHelper/IptcProductGenreParent/nonExistentPGParentMessage=' .. errorText
+                local errorText = 'Configured IPTC Product Genre Parent term does not seem to exist: "' .. iptcProductGenreParent .. '"'
+                local message = LOC '$$$/IptcCodeHelper/iptcProductGenreParent/nonExistentPGParentMessage=' .. errorText
                 LrDialogs.message(string.format(message), 'ERROR');
                 return
             else
                 local pGenreCodes = KwUtils.getKeywordChildNamesTable(pGParentKey)
-                AllGenreCodes = LUTILS.tableMerge(pGenreCodes, AllGenreCodes)
+                allGenreCodes = LUTILS.tableMerge(pGenreCodes, allGenreCodes)
             end
         end
     end
@@ -89,10 +86,10 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                     local filename = photo:getFormattedMetadata('fileName')
                     if prefs.autoAddParents then
                         myLogger:trace("Adding parent terms for photo: " .. filename)
-                        local addedKeywords = KwUtils.addAllKeywordParentsForPhoto(photo)
-                        if addedKeywords ~= {} then
-                            local addedKeywordsNames = KwUtils.getKeywordNames(addedKeywords)
-                            local addedKeywordsString = table.concat(addedKeywordsNames, ", ")
+                        local newKeywords = KwUtils.addAllKeywordParentsForPhoto(photo)
+                        if newKeywords ~= {} then
+                            local newKeywordNames = KwUtils.getKeywordNames(newKeywords)
+                            local addedKeywordsString = table.concat(newKeywordNames, ", ")
                             myLogger:trace("Parent terms added for photo: " .. addedKeywordsString)
                         else
                             myLogger:trace("No new parent keywords added for photo")
@@ -108,7 +105,7 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                         if iptcSubjectParentName ~= '' then
                             iptcSubjectParentKey = KwUtils.getKeywordByName(iptcSubjectParentName, topLevelKeywords)
                         end
-                        if IptcSceneParentName ~= '' then
+                        if iptcSceneParentName ~= '' then
                             iptcSceneParentKey = KwUtils.getKeywordByName(iptcSceneParentName, topLevelKeywords)
                         end
                         -- Iterate over existing keywords.
@@ -123,29 +120,29 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                                 local keyParents = KwUtils.getAllParentKeywords(kw)
                                 local keyPlusParents = type(keyParents) == 'table' and LUTILS.tableMerge(keyParents, {kw}) or {kw}
 
-                                if iptcSubjectParentKey ~= nil and KwUtils.kwInTable(iptcSubjectParentKey, keyParents) then
+                                if iptcSubjectParentKey ~= nil and LUTILS.inTable(iptcSubjectParentKey, keyParents) then
                                     -- See if kw or parents has a child term which is a code and add to inferableCodeKeywords, if so:
                                     for _,key in pairs(keyPlusParents) do
                                         local keyKids = key:getChildren()
-                                        for _,kid in pairs(kwKids) do
+                                        for _,kid in pairs(keyKids) do
                                             local kidName = kid:getName()
                                             local kidType = keywordType(kidName)
-                                            if kidType ~= 'standard' and KwUtils.kwInTable(kid, keywordsForPhoto) == false and KwUtils.kwInTable(kid, inferableCodeKeywords) == false then
+                                            if kidType ~= 'standard' and LUTILS.inTable(kid, keywordsForPhoto) == false and LUTILS.inTable(kid, inferableCodeKeywords) == false then
+                                                inferableCodeKeywords[#inferableCodeKeywords+1] = kid
+                                            end
+                                        end
+                                    end
+                                elseif iptcSceneParentKey ~= nil and LUTILS.inTable(iptcSceneParentKey, keyParents) then
+                                    for _,key in pairs(keyPlusParents) do
+                                        local keyKids = key:getChildren()
+                                        for _,kid in pairs(keyKids) do
+                                            local kidName = kid:getName()
+                                            local kidType = keywordType(kidName)
+                                            if kidType ~= 'standard' and LUTILS.inTable(kid, keywordsForPhoto) == false and LUTILS.inTable(kid, inferableCodeKeywords) == false then
                                                 inferableCodeKeywords[#inferableCodeKeywords + 1] = kid
                                             end
                                         end
                                     end
-                                elseif iptcSceneParentKey ~= nil and KwUtils.kwInTable(iptcSceneParentKey, keyParents) then
-                                    for _,key in pairs(keyPlusParents) do
-                                        local keyKids = key:getChildren()
-                                        for _,kid in pairs(kwKids) do
-                                            local kidName = kid:getName()
-                                            local kidType = keywordType(kidName)
-                                            if kidType ~= 'standard' and KwUtils.kwInTable(kid, keywordsForPhoto) == false and KwUtils.kwInTable(kid, inferableCodeKeywords) == false then
-                                                inferableCodeKeywords[#inferableCodeKeywords + 1] = kid
-                                            end
-                                        end
-                                    end 
                                 end
                             end
                         end
@@ -157,7 +154,7 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                             local inferableCodeKeywordsString = table.concat(inferableCodeKeywordNames, ", ")
                             myLogger:trace("Added code keywords: " .. inferableCodeKeywordsString)
                         end
-                    end 
+                    end
                 end
                 end);
     end
@@ -178,7 +175,7 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
                     myLogger:trace("Subject Codes to add: " .. subjString)
                     myLogger:trace("Scene Codes to add: " .. sceneString)
                 end
-                
+
                 if useIntelGenre or useProductGenre then
                     local PhotoKeywordTable = LUTILS.split(LMKeywords, ', ')
                     genreString = getGenreCodesFromKeywords(PhotoKeywordTable)
@@ -189,7 +186,7 @@ LrTasks.startAsyncTask (function()          -- Certain functions in LR which acc
             end);
     LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
 
-end)
+end))
 
 function writeCodes(photo, subjString, sceneString, genreString)
     subjString = LUTILS.trim(subjString)
@@ -206,8 +203,8 @@ function writeCodes(photo, subjString, sceneString, genreString)
         end
     end
     if useIntelGenre or useProductGenre then
-        currentGenreCodes = getCurrentIPTCFieldValue('intellectualGenre', photo)
-        
+        local currentGenreCodes = getCurrentIPTCFieldValue('intellectualGenre', photo)
+
         if (genreString ~= nil and #genreString >= 4) then
             photo:setRawMetadata("intellectualGenre", genreString)
             -- Allow emptying existing Genre Codes if not protected and no genre codes selected as keywords:
@@ -228,7 +225,7 @@ function getCurrentIPTCFieldValue(field, photo)
         else return "NO_SUCH_FIELD_FAILURE"
     end
 end
-    
+
 
 -- Take comma-separated string of all keywords used for a photo and find 6 and 8 -digit numbers
 -- which we return as IPTC scene codes and subject codes, respectively:
@@ -250,17 +247,17 @@ function getSubjectAndSceneCodesFromKeywords(kwString)
     end
     local subjectString = table.concat(subjectCodes, ", ")
     local sceneString = table.concat(sceneCodes, ", ")
-    
+
     return subjectString, sceneString
 end
 
--- Requires global AllGenreCodes array to be populated and identifies
+-- Requires global allGenreCodes array to be populated and identifies
 -- terms from the formattted list of keywords used on a photo (if a keyword
 -- matches an IPTC genre term by name, it will be copied to the IPTC genre field)
 function getGenreCodesFromKeywords(KeywordTable)
     local genreTermsForPhoto = {}
     for i, word in pairs(KeywordTable) do
-        if (AllGenreCodes[word] ~= nil) then
+        if (allGenreCodes[word] ~= nil) then
             genreTermsForPhoto[#genreTermsForPhoto + 1] = word
         end
     end

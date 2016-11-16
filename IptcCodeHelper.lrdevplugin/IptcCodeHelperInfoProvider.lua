@@ -168,7 +168,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
             spacing = viewFactory:label_spacing(),
 
             viewFactory:static_text {
-               title = LOC '$$$/IptcCodeHelper/Settings/IptcIntelGenreParent=Parent Keyword for Intellectual Genre:',
+               title = LOC '$$$/IptcCodeHelper/Settings/iptcIntelGenreParent=Parent Keyword for Intellectual Genre:',
                tooltip = 'Parent keyword (without hierarchy) for IPTC Intellectual Genre keywords. MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
                alignment = 'right',
             },
@@ -178,7 +178,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
                tooltip = 'Parent keyword (without hierarchy) for IPTC Intellectual Genre keywords. MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
                fill_horizonal = 1,
                width_in_chars = 35,
-               value = bind { key = 'IptcIntelGenreParent', object = prefs },
+               value = bind { key = 'iptcIntelGenreParent', object = prefs },
             },
          },
          
@@ -203,7 +203,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
 
          -- IPTC Product Genre parent keyword
             viewFactory:static_text {
-               title = LOC '$$$/IptcCodeHelper/Settings/IptcProductGenreParent=Parent Keyword for Product Genre:',
+               title = LOC '$$$/IptcCodeHelper/Settings/iptcProductGenreParent=Parent Keyword for Product Genre:',
                tooltip = 'Parent keyword (without hierarchy) for IPTC Product Genre keywords. MUST have a unique name (i.e. the same name cannot appear elsewhere in your keyword hierarchy).',
                alignment = 'right',
             },
@@ -211,7 +211,7 @@ function IptcCodeHelperInfoProvider.sectionsForTopOfDialog(viewFactory, property
             viewFactory:edit_field {
                fill_horizonal = 1,
                width_in_chars = 35,
-               value = bind { key = 'IptcProductGenreParent', object = prefs },
+               value = bind { key = 'iptcProductGenreParent', object = prefs },
             },
          },
 

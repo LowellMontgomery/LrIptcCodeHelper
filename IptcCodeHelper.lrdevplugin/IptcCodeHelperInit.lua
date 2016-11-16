@@ -13,8 +13,8 @@ local defaultPrefValues = {
     IptcSceneParent = '_IPTC-SCENE',
     useIntelGenre = false,
     useProductGenre = false,
-    IptcIntelGenreParent = '_IPTC-GENRE',
-    IptcProductGenreParent = '_IPTC-PRODUCT-GENRE',
+    iptcIntelGenreParent = '_IPTC-GENRE',
+    iptcProductGenreParent = '_IPTC-PRODUCT-GENRE',
     protectGenreCodes = true,
 }
 

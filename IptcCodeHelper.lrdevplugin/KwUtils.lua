@@ -33,7 +33,7 @@ KwUtils.Attribution = "This plugin uses KwUtils, Lightroom keyword utilities, ©
 
 function KwUtils.addKeywordWithParents(photo, keyword)
     photo:addKeyword(keyword)
-    parent = keyword:getParent() 
+    parent = keyword:getParent()
     if parent ~= nil then
         KwUtils.addKeywordWithParents(photo, parent)
     end
@@ -45,13 +45,12 @@ end
 function KwUtils.getAllParentKeywords(kw, parents)
     -- Set parents to empty table if not already existing
     parents = parents ~= nil and parents or {}
-    p = kw:getParent()
+    local p = kw:getParent()
     if p ~= nil then
-        parents[#parents + 1] = p
+        parents[#parents+1] = p
         KwUtils.getAllParentKeywords(p, parents)
-    else
-        return parents
     end
+    return parents
 end
 
 -- A photo may have keywords selected without the parent keywords actually being
@@ -60,19 +59,20 @@ end
 -- if you filter by the such a term. This function explicitly adds all keyword parents.
 function KwUtils.addAllKeywordParentsForPhoto(photo)
     local keywordsForPhoto = photo:getRawMetadata('keywords')
+
     local keywordsToAdd = {}
-    for _, kw in pairs(keywordsForPhoto) do
+    for _,kw in ipairs(keywordsForPhoto) do
         local kwParents = KwUtils.getAllParentKeywords(kw)
-        if kwParents ~= nil and kwParents ~= {} then
-            for _,parentKey in pairs(kwParents) do
-                if KwUtils.kwInTable(parentKey, keywordsForPhoto) ~= true and KwUtils.kwInTable(parentKey, keywordsToAdd) ~= true then
-                    keywordsToAdd[#keywordsToAdd + 1] = parentKey
+
+        if (kwParents ~= nil) and (type(kwParents) == 'table') and (#kwParents ~= 0) then
+            for _,parentKey in ipairs(kwParents) do
+                if (not LUTILS.inTable(parentKey, keywordsForPhoto)) and (not LUTILS.inTable(parentKey, keywordsToAdd)) then
+                    keywordsToAdd[#keywordsToAdd+1] = parentKey
                 end
             end
         end
     end
-    
-    for _, kwToAdd in pairs(keywordsToAdd) do
+    for _,kwToAdd in ipairs(keywordsToAdd) do
         photo:addKeyword(kwToAdd)
     end
     -- Return the keywords which have been added
@@ -151,7 +151,7 @@ function KwUtils.getKeywordByName(lookfor, keywordSet)
         else
             local kchildren = kw:getChildren()
             if kchildren and #kchildren > 0 then
-                nextkw = KwUtils.getKeywordByName(lookfor, kchildren)
+                local nextkw = KwUtils.getKeywordByName(lookfor, kchildren)
                 if nextkw ~= nil then
                     return nextkw
                 end
@@ -170,60 +170,45 @@ function KwUtils.getKeywordChildNamesTable(parentKey)
        childNames = KwUtils.getKeywordNames(kchildren)
     end
     -- Return the table of child terms (empty if no child terms for passed keyword)
-    return childNames;
+    return childNames
 end
 
 -- Get names of all Keyword objects in a table
-function KwUtils.getKeywordNames(keywords)  
+function KwUtils.getKeywordNames(keywords)
     local names = {}
-    for i, kw in pairs(keywords) do
-        names[#names +1] = kw:getName() 
+    if type(keywords) == 'table' then
+        for _,kw in ipairs(keywords) do
+            names[#names+1] = kw:getName()
+        end
     end
-    return names;
+    return names
 end
 
 -- Get existing keywords for a photo which are not in a given set (table)
-function KwUtils.getOtherKeywords(photo, keywords)
+function KwUtils.getOtherKeywords(photo, keywordNames)
     local photoKeywordList = photo:getFormattedMetadata('keywordTags')
-    local photoKeywords = LUTILS.split(photoKeywordList, ', ')
+    local photoKeywordNames = LUTILS.split(photoKeywordList, ', ')
     local ret = {}
 
-    for _, key in ipairs(photoKeywords) do
-        if not LUTILS.inTable(key, keywords) then
-            ret[#ret + 1] = key
+    for _, keyName in ipairs(photoKeywordNames) do
+        if not LUTILS.inTable(keyName, keywordNames) then
+            ret[#ret + 1] = keyName
         end
     end
-
     return ret
 end
 
 -- Check for actual keyword (by keyword ID) associated with a photo
 function KwUtils.hasKeywordById(photo, keyword)
-    local kwid = keyword.localIdentifier
     local keywordsForPhoto = photo:getRawMetadata('keywords')
-    for _, k in pairs(keywordsForPhoto) do
-        if k.localIdentifier == kwid then
-            return true
-        end
-    end
-    return false
+    return LUTILS.inTable(keyword, keywordsForPhoto)
 end
 
 -- Check if photo already has a particular keyword (by name)
-function KwUtils.hasKeywordByName(photo, keyword)
+function KwUtils.hasKeywordByName(photo, keywordName)
     local photoKeywordList = string.lower(photo:getFormattedMetadata('keywordTags'))
-    local photoKeywordTable = LUTILS.split(photoKeywordList, ', ')
-    return LUTILS.inTable(keyword, photoKeywordTable)
-end
-
--- Return true if a keyword is in a table of keywords. Checks keyword ID.
-function KwUtils.kwInTable(kw, tb)
-    if type(tb) ~= 'table' then return nil end
-    local kwid = kw.localIdentifier
-    for _, k in pairs(tb) do
-        if k.localIdentifier == kwid then return true end
-    end
-    return false
+    local keywordNamesTable = LUTILS.split(photoKeywordList, ', ')
+    return LUTILS.inTable(keywordName, keywordNamesTable)
 end
 
 return KwUtils
