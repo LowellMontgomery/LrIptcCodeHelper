@@ -62,7 +62,7 @@ You can also use the Plugin Manager to install Lightroom plugins from *anywhere*
 ![The Lightroom plugin manager menu item](lightroom-open-plugin-manager.jpg "Open the “File > Plug-in Manager…” menu item in Lightroom")
 
 3. Click on the `Add` button
-![Click the Add button at the bottom](lightroom-plugin-manager-add-button.jpg "Find and click the “Add” button")
+![Click the Add button at the bottom](lightroom-plugin-manager-add-button.png "Find and click the “Add” button")
 
 4. Locate the plugin, wherever you have downloaded it (here in a sub-folder within my Downloads directory)
 ![Select the plugin you want to add to Lightroom](lightroom-plugin-manager-select-plugin.png "Select the plugin, from wherever you want to keep it")
