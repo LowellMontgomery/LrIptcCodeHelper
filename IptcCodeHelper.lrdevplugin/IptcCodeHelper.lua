@@ -1,3 +1,7 @@
+local Require = require 'Require'.path ("../../debugscript.lrdevplugin")
+local Debug = require 'Debug'.init ()
+require 'strict'
+
 local LrApplication = import 'LrApplication'   -- Import LR namespace which provides access to active catalog
 local LrDialogs = import 'LrDialogs'   -- Import LR namespace for user dialog functions
 local LrLogger = import 'LrLogger'
