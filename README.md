@@ -11,7 +11,7 @@ The LrIptcCodeHelper is a Lightroom plugin designed to save you a ton of time, f
 
 ![IPTC Subject Code Entry via Lightroom’s Keywording Widget](lightroom-subject-code-entry-with-keywords.jpg "Entering IPTC Subject Codes via Lightroom’s Keywording Widget is much simpler")
 
-## The LrIptcCodeHelper Lightroom plugin copies those “keywords” to IPTC fields
+## The LrIptcCodeHelper Lightroom plugin copies IPTC “keywords” to the IPTC fields
 Since the IPTC subject (or media topic) codes and scene codes are numerical, these float to the top of the alphabetically-sorted “Keyword tags” field. Then it’s not hard to select and copy the subject and scene codes, but the IPTC metadata fields are far below in the Lightroom metadata interface, under the EXIF fields. You will probably need to scroll up and down in Lightroom’s metadata side panel to move between the keyword and IPTC code fields. I had already used [John Beardsworth’s excellent Search/Replace Transfer plugin](http://www.beardsworth.co.uk/lightroom/search-and-replace/ "Search Replace Transfer &#8211; John Beardsworth") to help with the copy/paste process, but that plugin is not really designed for the task (it copies all the contents of a field to another field, but does not provide a method to copy *some* of the keywords to one field and *some* to another). The LrIptcCodeHelper plugin was actually created after some discussion of my use case with Mr Beardsworth, who gave me some initial tips and Lightroom SDK example code (a couple Lua scripts) to help get me started. (Thank you, John… it really *was* helpful!)
 
 ### IPTC Subject codes (and compatible “media topic” codes) are 8-digit numerical codes
@@ -62,7 +62,7 @@ You can also use the Plugin Manager to install Lightroom plugins from *anywhere*
 ![The Lightroom plugin manager menu item](lightroom-open-plugin-manager.jpg "Open the “File > Plug-in Manager…” menu item in Lightroom")
 
 3. Click on the `Add` button
-![Click the Add button at the bottom](lightroom-plugin-manager-add-button.jpg "Find and click the “Add” button")
+![Click the Add button at the bottom](lightroom-plugin-manager-add-button.png "Find and click the “Add” button")
 
 4. Locate the plugin, wherever you have downloaded it (here in a sub-folder within my Downloads directory)
 ![Select the plugin you want to add to Lightroom](lightroom-plugin-manager-select-plugin.png "Select the plugin, from wherever you want to keep it")
@@ -70,38 +70,51 @@ You can also use the Plugin Manager to install Lightroom plugins from *anywhere*
 5. You should now see that the plugin is “installed and running”
 ![Lightroom Plugin Manager: Plugin Installed and Running](lightroom-plugin-manager-installed-running.png "In the plugin manager, you should now see that the IPTC Code Helper plugin is “installed and running”")
 
-### Preparing to use the IPTC Code Helper
+## Configuring the IPTC Code Helper for your optimal use
 For now, settings for this plugin are only visible in the Plugin Manager; read on…
 
-#### Safety first (avoiding loss of existing data)
-It’s likely that, if you’ve been doing this for a while, you have *already* added IPTC codes for some of your image library. In that case, be sure that you run with the (default) setting for the plugin to “Prevent clearing existing” values from the IPTC fields for those images. Otherwise, if you select images with values in the IPTC fields, but no corresponding keywords selected, you may clear those fields. This could result in a lot of work lost, so please beware.
+### Safety first (avoiding loss of existing data)
+It’s likely that, if you’ve been doing this for a while, you have *already* added IPTC codes for some of your image library. In that case, be sure that you run with the (default) setting for the plugin to “Prevent clearing existing” values from the IPTC fields for those images. Otherwise, if you select images with values in the IPTC fields, but no corresponding keywords selected, you may clear those fields. **This could result in a lot of work lost, so please beware.**
 
-Please also note that it’s “all or nothing” if you decide to use this plugin to update values for a field. At this time, values already in the field will be overwritten by whatever corresponding IPTC keywords you have selected. In the case of Genre codes, which may match an existing keyword (outside of the IPTC Genre parent hierarchies), it is *possible* that this *could* happen accidentally. Therefore, the initial default setting for the “Operate on IPTC … Genre keywords” settings is “off".
+Please also note that it’s “all or nothing”, if you decide to use this plugin to update values for a field. At this time, values *already* in the field will be overwritten by whatever corresponding IPTC keywords you have selected. In the case of Genre codes, which may match an existing keyword (outside of the IPTC Genre parent hierarchies), it is *possible* that this *could* happen accidentally. Therefore, the initial default setting for the “Operate on IPTC … Genre keywords” settings is “off".
 
-#### Entering IPTC codes via Lightroom’s Keyword List
-:point_right: Use a hierarchical keyword vocabulary like my LoweMo Image Keyword List for Lightroom or the one from David Rieck (which I understand also includes the IPTC codes) to add all your IPTC terms into the Keywords field. If you use my list, at least all of the subject and scene codes are not set to export (although the human-readable/English parent terms *are* set to be exported with other keywords).
-
-![Entering IPTC “Keywords” in Lightroom](lightroom-iptc-keywording.jpg "Entering IPTC “Keywords” in Lightroom: so much simpler than manual entry")
-
-#### Settings in the Lightroom Plugin Manager
+### Basic Settings in the Lightroom Plugin Manager
 Each of the IPTC controlled vocabulary fields has separate checkboxes for:
 1. setting whether to operate on that IPTC vocabulary, and
 2. setting whether to protect any existing field value from being cleared (if no corresponding keywords are selected)
 
-![Lightroom IptcCodeHelper UI](Lightroom-IptcCodeHelper-UI.png)
+![Settings for IPTC Subject and Scene Codes](Lightroom-IptcCodeHelper-subject-and-scene-code-settings.png)
 
-In the case of the “Genre” vocabularies, this is a bit different. Our current approach is to put both Intellectual and Product Genre keywords into the one (Intellectual Genre) field since the Product Genre field does not exist. I really think the IPTC could just combine the two Genre vocabularies and/or that Adobe may well swap out Intellectual Genre for Product Genre, when/if it finally dawns on someone there that Product Genre is *really* the only IPTC Genre vocabulary that makes much sense in the context of describing images. Intellectual Genre keywords are generally less relevant to photo media (e.g., a photo of someone might be useful for an obituary *at some point*, but should we *really* be adding *that* tag “for the day when…”?)
 
-The two Genre vocabularies also differ (from the Subject and Scene code vocabularies), at least in this plugin’s user interface, in that we provide text fields where we expect a user to enter the name(s) of the parent terms for the Genre keywords they are using. For users of the LoweMo Lightroom Keyword CV, the top-level Genre terms are already entered into those fields, but providing this configuration allows anyone not using the keyword vocabulary I developed to still add the IPTC terms, under whatever top-level parent keywords they choose (indeed the IPTC genre terms do not need to be on the top level at all and are actually on the second level in my own keyword list).
+For users of the LoweMo Lightroom Keyword CV, the top-level IPTC “parent terms” are already entered into the corresponding fields. These fields are provided to allow anyone else (or anyone who may have renamed those terms), to make full use of the plugin. Note that such top-level terms MUST be uniquely named within your keyword vocabulary. And **be sure to make corresponding changes to the settings in the Plugin Manager if you ever do rename those keywords**.
 
-### Using the IPTC Code Helper Lightroom Plugin
+### Genre Settings and Our Approach
+In the case of the “Genre” vocabularies, this is a bit different. Our current approach is to put both Intellectual and Product Genre keywords into the one (“Intellectual Genre”) field since the Product Genre field does not exist and Adobe does not really provide for exporting photos with added fields. For most of us, the “Product Genre” terms are more appropriate for describing our images and “Intellectual Genre” keywords are less relevant to photo media. (For example, a photo of someone *might* be useful in an obituary *at some point*, but should we *really* be adding *that* tag for “the day when…”?) Other “Intellectual Genre” term clearly are not used in the way that we normally describe photographic media, e.g. "Background", one of the terms, has nothing to do with an image you might use as the bottom layer of a composition. It could be better called "back-story", i.e. the use description for “Background”, as seen on the [IPTC newscodes site](http://cv.iptc.org/newscodes/genre/ "Human readable IPTC genre newscodes") is "The object provides some scene setting and explanation for the event being reported." So it's all about reportage.
+
+![Lightroom IptcCodeHelper Genre Settings](Lightroom-IptcCodeHelper-GenreSettings.png)
+
+### Settings for Adding Parents and Related IPTC Keyword Codes
+I've recently been working to help make a couple of other open-source plugins more useful; these plugins interface with “visual keywording” computer-based-learning technologies via the Web. A small JPEG is exported and sent to the service and it returns appropriate keywords. But the plugins that supported this didn't respect a hierarchical vocabulary, so would add new terms at the base of my keyword vocabulary (or under a designated parent for "new keywords"). After keywording a batch this way, I would need to spend time finding the terms in my list and migrating from the new terms to the pre-existing ones and deleting the new terms. This wasn't fun; it was tedious. The time it took to sort out merging of those terms took so long that it just didn't make any sense to use the plugins. But then I worked on improving these plugins to help them use the existing keywords within my hierarchical keyword list. And then I realized that some of the IPTC codes could be automatically inserted if I made some small tweaks to my workflow. My LoweMo.photo hierarchical keyword list includes, where possible, additional keywords *within* the IPTC subject/media topic hierarchy so that by selecting a common term, e.g. “smog”, in this example, we are ready to select a number of related IPTC subject terms, “smog” fits nicely as a sub-category of "air pollution" (an IPTC media-topic term). So it was then “only” a matter of expanding the tree and selecting all parent terms for any terms inserted by my auto-tagging process as well as all of the code (numerical child terms of the human-readable ones). After some improvements to this plugin, I no longer need to expand the whole vocabulary tree to select all of the parent terms and media topic codes. Instead, it can be done “automagically”.
+
+![IPTC Media Subject Code Structure](IPTC-media-subject-code-structure.png "Here, we could select only the term “smog” and all of the other marked terms could be auto-selected. YES including all codes")
+
+If you select the plugin settings for **“Add all parent keywords for selected keywords”** and **“Add all inferable IPTC codes”**, the plugin finds all the parent terms for “smog” that you see selected in the screenshot here, as well as all of the related (numerical) codes. This is a super-powerful innovation that took a while to get working right, but can save a ton of time, especially if your keyword list is appropriately structured. It also helps if you are filtering to find keywords you know are in the list and just selecting them (since the numerical child terms will not be visible when you do so). After doing whatever you do for normal keywording, just run this plugin script to add parent terms (not just for the IPTC branches of your hierarchy) and the actual IPTC codes, if any of the keywords you selected lie within those parts (IPTC Subject/Media topic and/or Scene codes sections) of your hierarchy. It saves a ton of clicking, might help save you from developing carpal tunnel syndrome, and hopefully frees up some precious time for doing the things you actually love doing.
+
+![Add Parent Keywords And Related Iptc Codes](add-parent-keywords-and-related-iptc-codes.png)
+
+***Caveats*:**
+
+1. Full support requires a keyword list with the kind of structure you see in this screenshot, e.g. the LoweMo.photo keyword list I've been working on.
+2. This feature is not enabled by default when you install this plugin, since some people might not want to have all parent keywords explicitly selected (note that this does not mean they will all be exported—all parents not set to be suppressed on export would be exported anyway, but those set to be suppressed would just help for filtering by branches of your keyword hierarchy).
+3. Adding the “inferable codes” only works within the Subject (Media topic) and Scene codes branches if a selected human readable keyword is a direct parent of the IPTC code that you want to have selected. For it to work, the top level keywords for these sections of your keyword list must be entered in the corresponding “Parent Keyword” fields.
+
+## Using the IPTC Code Helper Lightroom Plugin
 Once the plugin is configured, it’s simply a matter of selecting some photos and running the plugin processes on them by selecting the menu item, `File > Plugin Extras > Run IPTC Code Helper`:
 
 ![Running the IPTC Code Helper in Lightroom](lightroom-run-iptc-code-helper.jpg "Launching the IPTC Code Helper plugin process in Lightroom")
 
-If you have a relatively small number of images selected, the processing may be done in under a second:
+If you have a relatively small number of images selected, and if you are not running more “expensive” processes (such as the automatic adding of keyword parents and related IPTC Subject/Media and/or Scene codes) the processing of multiple images may be done in under a second:
 
 ![Lightroom Iptc Code Helper Running Finished](lightroom-iptc-code-helper-running-finished.jpg)
 
-Imagine that! The only time it takes, once you have done normal keywording, including a few extra terms, is basically the time it takes to select the photos and trigger the script. Before I’d written this script (but after I’d started using the keyword list to add subject and scene codes), it was taking me about a minute per photo to copy, find the fields, paste, and clean things up; not only was it just too much time spent on this process, but it was also the kind of task that made me want to run away and find any other drudge-work that needed to be done AND it was the kind of task that could lead to lots of small mistakes (copying a character too few or too many or pasting the codes into a wrong field… one could not multi-task and expect a perfect job). Now that work, plus all the Genre codes, which appear all over within the keyword list, is just finished in no time flat. I hope that at least a few of you will find this plugin and love it as much as I do!
-
+That said, you should expect it to take a while if you are taking full advantage of the feature-set and automatically adding keywords, not simply copying the numerical codes to the IPTC Subject and Scene code fields (the original purpose of the plugin). However, the new auto-adding features are super-powerful and can save you a ton more time.

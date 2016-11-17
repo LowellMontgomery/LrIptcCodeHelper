@@ -7,10 +7,14 @@ local defaultPrefValues = {
     useSceneCodes = true,
     protectSubjCodes = true,
     protectSceneCodes = true,
+    autoAddParents = false,
+    autoAddCodes = false,
+    IptcSubjectParent = '_IPTC-MEDIA-SUBJECT',
+    IptcSceneParent = '_IPTC-SCENE',
     useIntelGenre = false,
     useProductGenre = false,
-    IptcIntelGenreParent = 'IPTC-GENRE',
-    IptcProductGenreParent = 'IPTC-PRODUCT-GENRE',
+    iptcIntelGenreParent = '_IPTC-GENRE',
+    iptcProductGenreParent = '_IPTC-PRODUCT-GENRE',
     protectGenreCodes = true,
 }
 
