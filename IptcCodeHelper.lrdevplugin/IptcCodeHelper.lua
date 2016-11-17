@@ -88,30 +88,36 @@ LrTasks.startAsyncTask (Debug.showErrors(function()           -- Certain functio
     -- iterate over all photos and perform this process. This is separate as it may be (or bigger sets of images)
     -- that this is more time-consuming and requires a prolonged write access. It must also happen before the copy
     -- process and requires several steps, so it breaks that up.
-    if prefs.autoAddParents == true or prefs.autoAddCodes == true then
-        catalog:withWriteAccessDo("0", function(context)
-			local progressTitle = ""
-			if (prefs.autoAddParents and prefs.autoAddCodes) then
-				progressTitle = "Adding parent & IPTC keywords"
-			elseif prefs.autoAddParents then
-				progressTitle = "Adding parent keywords"
-			elseif prefs.autoAddCodes then
-				progressTitle = "Adding code keywords"
-			end
+	
+	local actionTitle = ""
+	if (prefs.autoAddParents and prefs.autoAddCodes) then
+		actionTitle = "Adding IPTC & parent keywords"
+	elseif prefs.autoAddParents then
+		actionTitle = "Adding parent keywords"
+	elseif prefs.autoAddCodes then
+		actionTitle = "Adding code keywords"
+	elseif useSubjCodes or useSceneCodes or useProductGenre or useIntelGenre then
+		actionTitle = "Copying codes to IPTC fields"
+	end
+	
+    catalog:withWriteAccessDo(actionTitle, function(context)
 
-			local addKeywordsProgress = LrProgressScope { title=progressTitle, functionContext = context, caption = ""}
-			addKeywordsProgress:setCancelable(true)
+		local metaEditProgress = LrProgressScope({ title=actionTitle, functionContext = context })
+		metaEditProgress:setCancelable(true)
 
-            for i, photo in ipairs(cat_photos) do
-			    if addKeywordsProgress:isCanceled() then
-			      break;
-			    end
-				addKeywordsProgress:setPortionComplete(i, #cat_photos)
-                local filename = photo:getFormattedMetadata('fileName')
+        for i, photo in ipairs(cat_photos) do
+		    if metaEditProgress:isCanceled() then
+		      break;
+		    end
+			metaEditProgress:setPortionComplete(i, #cat_photos)
+            local fileName = photo:getFormattedMetadata('fileName')
+			local photoProgress = LrProgressScope { parent = metaEditProgress, caption = "Processing " .. fileName}
+			photoProgress:setCaption("Processing " .. fileName)
+		    if prefs.autoAddParents == true or prefs.autoAddCodes == true then
                 if prefs.autoAddParents then
-					local currentTask = "Adding keywords for: " .. filename
+					local currentTask = "Adding keywords for: " .. fileName
                     myLogger:trace(currentTask)
-					addKeywordsProgress:setCaption(currentTask)
+					photoProgress:setCaption(currentTask)
                     local newKeywords = KwUtils.addAllKeywordParentsForPhoto(photo)
                     if newKeywords ~= {} then
                         local newKeywordNames = KwUtils.getKeywordNames(newKeywords)
@@ -124,8 +130,8 @@ LrTasks.startAsyncTask (Debug.showErrors(function()           -- Certain functio
                 end
                 -- Now we can check for codes to auto-add, if this is configured
                 if prefs.autoAddCodes == true then
-					local currentTask = "Adding code keywords for photo: " .. filename
-					addKeywordsProgress:setCaption(currentTask)
+					local currentTask = "Adding code keywords for photo: " .. fileName
+					photoProgress:setCaption(currentTask)
 
                     local keywordsForPhoto = photo:getRawMetadata('keywords')
                     local iptcSubjectParentKey = nil
@@ -190,57 +196,48 @@ LrTasks.startAsyncTask (Debug.showErrors(function()           -- Certain functio
 						allAddedKeywordNames[i] = LUTILS.tableMerge(addedKeywords, inferableCodeKeywordNames)
 					end
                 end
-            end
-				
-			-- Now process the IPTC codes, moving them to their respective fields.
+        	end
+
 			if useSubjCodes or useSceneCodes or useIntelGenre or useProductGenre then
-				local progressTitle = "Copying codes to IPTC Fields..."
-				local copyCodesProgress = LrProgressScope { title=progressTitle, functionContext = context, caption="" }
-				copyCodesProgress:setCancelable(true)
-	            for i, photo in ipairs(cat_photos) do
-				    if copyCodesProgress:isCanceled() then
-				      break;
-				    end
-					copyCodesProgress:setPortionComplete(i, #cat_photos)
-	                local filename = photo:getFormattedMetadata('fileName')
-					local currentTask = "Processing: " .. filename
-					addKeywordsProgress:setCaption(currentTask)
-	                myLogger:trace(currentTask)
-	                local LMKeywords = photo:getFormattedMetadata('keywordTags')
-					
-					-- Add any newly added code keywords to these
-					if allAddedKeywordNames[i] ~= nil then
-						local LMKeyNames = LUTILS.split(LMKeywords, ", ")
-						local mergedKeyNames = LUTILS.tableMerge(allAddedKeywordNames[i], LMKeyNames)
-						LMKeywords = table.concat(mergedKeyNames, ", ")
-					end
-	                myLogger:trace("Photo keywords: " .. LMKeywords)
-	                local genreString = ''
-	                local sceneString = ''
-	                local subjString = ''
+				local currentTask = "Copying IPTC codes for: " .. fileName
+				photoProgress:setCaption(currentTask)
+                myLogger:trace(currentTask)
+                local LMKeywords = photo:getFormattedMetadata('keywordTags')
+			
+				-- Add any newly added code keywords to these
+				if allAddedKeywordNames[i] ~= nil then
+					local LMKeyNames = LUTILS.split(LMKeywords, ", ")
+					local mergedKeyNames = LUTILS.tableMerge(allAddedKeywordNames[i], LMKeyNames)
+					LMKeywords = table.concat(mergedKeyNames, ", ")
+				end
+                myLogger:trace("Photo keywords: " .. LMKeywords)
+                local genreString = ''
+                local sceneString = ''
+                local subjString = ''
 
-	                -- Deal with prefs for the next part:
-	                if useSubjCodes or useSceneCodes then
-	                    subjString, sceneString = getSubjectAndSceneCodesFromKeywords(LMKeywords)
-	                    myLogger:trace("Subject Codes to add: " .. subjString)
-	                    myLogger:trace("Scene Codes to add: " .. sceneString)
-	                end
+                -- Deal with prefs for the next part:
+                if useSubjCodes or useSceneCodes then
+                    subjString, sceneString = getSubjectAndSceneCodesFromKeywords(LMKeywords)
+                    myLogger:trace("Subject Codes to add: " .. subjString)
+                    myLogger:trace("Scene Codes to add: " .. sceneString)
+                end
 
-	                if useIntelGenre or useProductGenre then
-	                    local PhotoKeywordTable = LUTILS.split(LMKeywords, ', ')
-	                    genreString = getGenreCodesFromKeywords(PhotoKeywordTable)
-						Debug.lognpp("genreString", genreString)						
-	                    myLogger:trace("Genre Code(s) to add: " .. genreString)
-	                end
-	                writeCodes(photo, subjString, sceneString, genreString)
-	            end
-			    LrDialogs.message("Done copying IPTC codes for " .. #cat_photos .. " images.")
-			end
-        end);
-    end
-    -- Do the actual copying of codes to the IPTC fields
-    -- catalog:withWriteAccessDo("0", function(context)
-    -- end);
+                if useIntelGenre or useProductGenre then
+                    local PhotoKeywordTable = LUTILS.split(LMKeywords, ', ')
+                    genreString = getGenreCodesFromKeywords(PhotoKeywordTable)
+					-- Debug.lognpp("genreString", genreString)
+                    myLogger:trace("Genre Code(s) to add: " .. genreString)
+                end
+                writeCodes(photo, subjString, sceneString, genreString)
+            end
+									
+			-- Now process the IPTC codes, moving them to their respective fields.
+        end
+		
+		metaEditProgress:done()
+		local dialogMessage = metaEditProgress:isCanceled() and actionTitle .. " process canceled; no images changed." or actionTitle .. ": Done editing metadata for " .. #cat_photos .. " images."
+	    LrDialogs.message(dialogMessage)
+    end);
 
 end))
 
@@ -324,7 +321,6 @@ function keywordType(keyName)
     local isNumber = tonumber(keyName)
     --tonumber will return nil if it does not parse a number
     if isNumber ~= nil and isNumber ~= false then
-        -- myLogger:trace("Number found: " .. word)
         --Subject codes are larger than a 7-digit number
         if #keyName == 8 then return 'subject'
         --Scene codes are larger than a 5-digit number
