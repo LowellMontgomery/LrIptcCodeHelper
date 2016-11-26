@@ -89,16 +89,16 @@ LrTasks.startAsyncTask (Debug.showErrors(function()           -- Certain functio
     -- that this is more time-consuming and requires a prolonged write access. It must also happen before the copy
     -- process and requires several steps, so it breaks that up.
 	
-	local actionTitle = ""
-	if (prefs.autoAddParents and prefs.autoAddCodes) then
-		actionTitle = "Adding IPTC & parent keywords"
-	elseif prefs.autoAddParents then
-		actionTitle = "Adding parent keywords"
-	elseif prefs.autoAddCodes then
-		actionTitle = "Adding code keywords"
-	elseif useSubjCodes or useSceneCodes or useProductGenre or useIntelGenre then
-		actionTitle = "Copying codes to IPTC fields"
-	end
+    local actionTitle = ""
+    if (prefs.autoAddParents and prefs.autoAddCodes) then
+        actionTitle = "Adding IPTC & parent keywords"
+    elseif prefs.autoAddParents then
+        actionTitle = "Adding parent keywords"
+    elseif prefs.autoAddCodes then
+        actionTitle = "Adding code keywords"
+    elseif useSubjCodes or useSceneCodes or useProductGenre or useIntelGenre then
+        actionTitle = "Copying codes to IPTC fields"
+    end
 	
     catalog:withWriteAccessDo(actionTitle, function(context)
 
