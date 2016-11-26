@@ -24,7 +24,7 @@ avoid including this file from causing undue bloat.
 
 local LUTILS = {}
 
-LUTILS.VERSION = 20161101.01 -- version history at end of file
+LUTILS.VERSION = 20161121.02 -- version history at end of file
 LUTILS.AUTHOR_NOTE = "LUTILS.lua--Lua utility functions by Lowell Montgomery (https://lowemo.photo/lightroom-lua-utils) version: " .. LUTILS.VERSION
 
 -- The following provides an 80 character-width attribution text that can be inserted for display
@@ -77,3 +77,6 @@ function LUTILS.trim(s)
 end
 
 return LUTILS;
+
+-- 20161101.01 Initial pre-release version
+-- 20161121.02 2nd Pre-release version; only minor changes.
